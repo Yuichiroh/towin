@@ -10,7 +10,7 @@ import scala.collection.mutable
 import scala.io.Source
 
 object TowinDict {
-  private var rules = mutable.Map[String, mutable.Map[String, String]]()
+  private var rules = mutable.Map[String, mutable.Map[String, List[String]]]()
 
   /** extracts suffixes of conjugation forms for all conjugation types from UniDic lex.csv, and creates object dump.
     *
@@ -26,8 +26,9 @@ object TowinDict {
     for (line <- data) {
       val Array(surface, _, _, _, pos, pos1, pos2, pos3, infType, infForm, _, _, _, _, lemma, _*) = line.split(",")
       if (infType != "*") {
-        val rule = rules.getOrElseUpdate(createQuery(lemma, pos, infType), mutable.Map[String, String]())
-        rule.getOrElseUpdate(infForm, surface)
+        val rule = rules.getOrElseUpdate(createQuery(lemma, pos, infType), mutable.Map[String, List[String]]())
+        val curr = rule.getOrElse(infForm, Nil)
+        rule.update(infForm, (surface :: curr).distinct)
       }
     }
 
@@ -36,25 +37,27 @@ object TowinDict {
     }
   }
 
+  def load(path: String): Unit = load(new File(path))
+
   def load(file: File): Unit = {
     rules = {
       for (ois <- IO.In.ois(file)) yield {
-        ois.readObject().asInstanceOf[mutable.Map[String, mutable.Map[String, String]]]
+        ois.readObject().asInstanceOf[mutable.Map[String, mutable.Map[String, List[String]]]]
       }
     }
   }
 
-  def allInflectionsOf(lemma: String, pos: String, infType: String): mutable.Map[String, String] = {
+  def allInflectionsOf(lemma: String, pos: String, infType: String): Map[String, List[String]] = {
     val key = createQuery(lemma, pos, infType)
-    rules(key)
+    rules.getOrElse(key, Map.empty[String, List[String]]).toMap
   }
 
-  def createQuery(lemma: String, pos: String, infType: String) = s"$lemma:$pos:$infType"
-
-  def inflectionOf(lemma: String, pos: String, infType: String)(infForm: String): String = {
+  def inflectionOf(lemma: String, pos: String, infType: String)(infForm: String): List[String] = {
     val key = createQuery(lemma, pos, infType)
     rules(key)(infForm)
   }
+
+  def createQuery(lemma: String, pos: String, infType: String) = s"$lemma:$pos:$infType"
 
   def stemming(w1: String, w2: String): String = stemming(w1.toList, w2.toList)
 

@@ -2,7 +2,7 @@ name := "yuima.towin"
 
 version := "0.1"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.11.12"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
@@ -16,10 +16,6 @@ logLevel in Global := Level.Error
 showSuccess := false
 
 outputStrategy := Some(StdoutOutput)
-
-javaOptions in Test += "-Djava.library.path=./lib/"
-
-javaOptions in Runtime += "-Djava.library.path=./lib/"
 
 libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.0"
 
